@@ -1,0 +1,33 @@
+# OS cruft
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+
+# Node / frontend
+node_modules/
+dist/
+build/
+out/
+
+# Virtualenv
+.venv/
+env/
+venv/
+
+# Env files
+.env
+.env.*
+
+# Docker
+*.log
+docker-compose.override.yml
+
+# IDE/editor
+.vscode/
+.idea/
+*.swp

@@ -52,7 +52,7 @@ jobs:
   deploy:
     needs: build-and-push
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-    runs-on: [self-hosted, ec2, prod] # <-- matches the labels you set
+    runs-on: [self-hosted, prod] # <-- matches the labels you set
     steps:
       - uses: actions/checkout@v4
 

@@ -1,6 +1,6 @@
 services:
   web:
-    image: ghcr.io/<YOUR_GH_USER>/albear-t:latest
+    image: ghcr.io/albear007/albear-t:latest
     ports:
       - "127.0.0.1:8080:80"   # keep localhost-only; Cloudflare Tunnel will front it
     restart: unless-stopped

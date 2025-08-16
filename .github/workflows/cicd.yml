@@ -1,0 +1,98 @@
+name: CI/CD (PR build; main deploy)
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+# prevent overlapping deploys to the same env
+concurrency:
+  group: prod-deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write # needed to push to GHCR on main
+
+jobs:
+  # --- Build check on PRs (no push) ---
+  pr-build:
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build container (no push)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile
+          push: false
+          platforms: linux/amd64
+          tags: ghcr.io/${{ github.repository_owner }}/albear-t:pr-check
+
+  # --- Build & push on main ---
+  build-and-push:
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & push image (multi-arch)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/albear-t:latest
+            ghcr.io/${{ github.repository_owner }}/albear-t:${{ github.sha }}
+
+  # --- Deploy to EC2 after image push ---
+  deploy:
+    needs: build-and-push
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # copy deploy files (compose, etc.) to EC2
+      - name: Copy deploy files to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "deploy/*"
+          target: "/home/${{ secrets.EC2_USER }}/albear-t"
+
+      # login to GHCR on EC2, pull & restart
+      - name: Pull & restart on EC2
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -e
+            mkdir -p ~/albear-t
+            docker login ghcr.io -u "${{ github.actor }}" -p "${{ secrets.GHCR_PAT }}"
+            cd ~/albear-t
+            docker compose -f deploy/docker-compose.prod.yml pull
+            docker compose -f deploy/docker-compose.prod.yml up -d
+            docker image prune -f

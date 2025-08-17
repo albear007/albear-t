@@ -54,8 +54,11 @@ jobs:
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     runs-on: [self-hosted, prod] # <-- matches the labels you set
     steps:
+      - name: Ensure workspace writable
+        run: |
+          sudo chown -R "$USER":"$USER" "$GITHUB_WORKSPACE" || true
+          sudo rm -rf "$GITHUB_WORKSPACE"/* "$GITHUB_WORKSPACE"/.[!.]* "$GITHUB_WORKSPACE"/..?* || true
       - uses: actions/checkout@v4
-
       - name: Docker login to GHCR (pull permissions)
         run: |
           echo "${GHCR_PAT}" | docker login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin

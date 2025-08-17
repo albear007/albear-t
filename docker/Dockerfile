@@ -1,5 +1,8 @@
+# docker/Dockerfile
 FROM caddy:alpine
-WORKDIR /srv
-COPY app /srv
+
+# Copy the Caddy config into the standard path
 COPY docker/Caddyfile /etc/caddy/Caddyfile
-EXPOSE 80
+
+# Copy your static site into the container
+COPY app /srv

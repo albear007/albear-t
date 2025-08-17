@@ -1,9 +1,7 @@
+# docker-compose.yml (dev)
 services:
   web:
-    image: caddy:alpine
-    volumes:
-      - ./app:/srv:ro
-      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+    image: ghcr.io/albear007/albear-t:latest
     ports:
       - "3000:80"
     restart: unless-stopped

@@ -6,3 +6,9 @@ services:
       - "80:80"
       - "443:443"
     restart: unless-stopped
+  # optional: lightweight healthcheck for nicer CI failures
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/"]
+      interval: 15s
+      timeout: 3s
+      retries: 5

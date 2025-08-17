@@ -1,0 +1,6 @@
+# Simple dev server on port 80 (we'll map it to 3000 locally)
+:80 {
+    root * /srv
+    encode zstd gzip
+    file_server
+}

@@ -1,5 +1,4 @@
-:80 {
+albeart.xyz, www.albeart.xyz {
     root * /srv
-    encode zstd gzip
     file_server
 }

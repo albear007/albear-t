@@ -1,6 +1,6 @@
 services:
   web:
-    image: ghcr.io/<YOUR_GH_USER>/albear-t:latest
+    image: ghcr.io/albear007/albear-t:latest
     ports:
       - "80:80"
       - "443:443"

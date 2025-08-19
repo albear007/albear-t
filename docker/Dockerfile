@@ -1,8 +1,13 @@
-# docker/Dockerfile
+# Build stage
+FROM node:20-alpine AS build
+WORKDIR /app
+COPY package.json ./
+RUN npm install
+COPY app ./app
+COPY vite.config.js ./
+RUN npm run build
+
+# Serve stage
 FROM caddy:alpine
-
-# Copy the Caddy config into the standard path
 COPY docker/Caddyfile.prod /etc/caddy/Caddyfile
-
-# Copy your static site into the container
-COPY app /srv
+COPY --from=build /app/dist /srv
